@@ -1,0 +1,5 @@
+{
+  "name": "FacturePro Maroc",
+  "description": "A free invoicing and quoting software for freelancers and SMEs in Morocco. Manage clients, create professional quotes, convert them into invoices, and track payments. All data is stored locally in your browser.",
+  "requestFramePermissions": []
+}
