@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { useData } from '../context/DataContext';
 import { UsersIcon, DocumentTextIcon, RectangleStackIcon, BanknotesIcon } from '@heroicons/react/24/solid';
 import { InvoiceStatus, QuoteStatus } from '../types';
+import { Link } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
     const { clients, quotes, invoices } = useData();
@@ -65,7 +67,11 @@ const Dashboard: React.FC = () => {
                              <li key={quote.id} className="py-3 flex justify-between items-center">
                                 <div>
                                     <p className="font-medium">{quote.quoteNumber}</p>
-                                    <p className="text-sm text-slate-500">Client: {clients.find(c=>c.id === quote.clientId)?.name || 'N/A'}</p>
+                                    <p className="text-sm text-slate-500">Client: {
+                                        clients.find(c=>c.id === quote.clientId) ?
+                                        <Link to={`/clients/${quote.clientId}`} className="hover:text-cyan-600">{clients.find(c=>c.id === quote.clientId)?.name}</Link> :
+                                        'N/A'
+                                    }</p>
                                 </div>
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                     quote.status === QuoteStatus.Accepted ? 'bg-green-100 text-green-800' :
@@ -87,7 +93,11 @@ const Dashboard: React.FC = () => {
                              <li key={invoice.id} className="py-3 flex justify-between items-center">
                                 <div>
                                     <p className="font-medium">{invoice.invoiceNumber}</p>
-                                    <p className="text-sm text-slate-500">Client: {clients.find(c=>c.id === invoice.clientId)?.name || 'N/A'}</p>
+                                    <p className="text-sm text-slate-500">Client: {
+                                        clients.find(c=>c.id === invoice.clientId) ?
+                                        <Link to={`/clients/${invoice.clientId}`} className="hover:text-cyan-600">{clients.find(c=>c.id === invoice.clientId)?.name}</Link> :
+                                        'N/A'
+                                    }</p>
                                 </div>
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                     invoice.status === InvoiceStatus.Paid ? 'bg-green-100 text-green-800' :

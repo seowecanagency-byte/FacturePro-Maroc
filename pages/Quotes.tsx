@@ -9,8 +9,33 @@ const Quotes: React.FC = () => {
     const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
     const [viewingQuote, setViewingQuote] = useState<Quote | null>(null);
     const [showArchived, setShowArchived] = useState(false);
+    const [expiryFilter, setExpiryFilter] = useState('all');
 
     const isReadOnly = companyInfo.role === UserRole.Comptable;
+    
+    const getExpiryInfo = (expiryDate: string, status: QuoteStatus) => {
+        if (![QuoteStatus.Draft, QuoteStatus.Sent].includes(status)) {
+            return null;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const expiry = new Date(expiryDate);
+        expiry.setHours(0, 0, 0, 0);
+
+        const diffTime = expiry.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+            return { text: 'Expiré', color: 'red', isUrgent: true };
+        }
+        if (diffDays <= 7) {
+            return { text: 'Expire bientôt', color: 'yellow', isUrgent: true };
+        }
+        return null;
+    };
+
 
     const handleDelete = (id: string) => {
         if (isReadOnly) return;
@@ -58,6 +83,13 @@ const Quotes: React.FC = () => {
     
     const displayedQuotes = quotes
         .filter(q => showArchived || q.status !== QuoteStatus.Archived)
+        .filter(q => {
+            if (expiryFilter === 'all') {
+                return true;
+            }
+            const expiryInfo = getExpiryInfo(q.expiryDate, q.status);
+            return expiryInfo?.isUrgent;
+        })
         .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
 
     return (
@@ -71,11 +103,26 @@ const Quotes: React.FC = () => {
                     </button>
                 )}
             </div>
-            <div className="mb-6 flex justify-end">
-                 <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
-                    <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-cyan-200 focus:ring-opacity-50"/>
-                    <span>Afficher les devis archivés</span>
-                </label>
+            <div className="flex justify-end items-center space-x-4 mb-6">
+                 <div>
+                    <label htmlFor="expiryFilter" className="block text-sm font-medium text-gray-700">Filtrer</label>
+                    <select
+                        id="expiryFilter"
+                        name="expiryFilter"
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm rounded-md"
+                        value={expiryFilter}
+                        onChange={(e) => setExpiryFilter(e.target.value)}
+                    >
+                        <option value="all">Tous</option>
+                        <option value="expiring">Expire Bientôt / Expiré</option>
+                    </select>
+                </div>
+                <div className="pt-6">
+                     <label className="flex items-center space-x-2 text-sm text-gray-600 cursor-pointer">
+                        <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-cyan-200 focus:ring-opacity-50"/>
+                        <span>Afficher les archivés</span>
+                    </label>
+                </div>
             </div>
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
                  <div className="overflow-x-auto">
@@ -94,6 +141,7 @@ const Quotes: React.FC = () => {
                             {displayedQuotes.map((quote) => {
                                 const total = quote.items.reduce((acc, item) => acc + (item.quantity * item.unitPrice), 0);
                                 const client = clients.find(c => c.id === quote.clientId);
+                                const expiryInfo = getExpiryInfo(quote.expiryDate, quote.status);
                                 return (
                                     <tr key={quote.id}>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{quote.quoteNumber}</td>
@@ -101,15 +149,24 @@ const Quotes: React.FC = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">{new Date(quote.issueDate).toLocaleDateString('fr-FR')}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">{total.toLocaleString('fr-MA', { style: 'currency', currency: 'MAD' })}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                quote.status === QuoteStatus.Accepted ? 'bg-green-100 text-green-800' :
-                                                quote.status === QuoteStatus.Sent ? 'bg-yellow-100 text-yellow-800' :
-                                                quote.status === QuoteStatus.Rejected ? 'bg-red-100 text-red-800' :
-                                                quote.status === QuoteStatus.Archived ? 'bg-slate-100 text-slate-800' :
-                                                'bg-gray-100 text-gray-800'
-                                            }`}>
-                                                {quote.status}
-                                            </span>
+                                            <div className="flex items-center space-x-2">
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                    quote.status === QuoteStatus.Accepted ? 'bg-green-100 text-green-800' :
+                                                    quote.status === QuoteStatus.Sent ? 'bg-yellow-100 text-yellow-800' :
+                                                    quote.status === QuoteStatus.Rejected ? 'bg-red-100 text-red-800' :
+                                                    quote.status === QuoteStatus.Archived ? 'bg-slate-100 text-slate-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                                }`}>
+                                                    {quote.status}
+                                                </span>
+                                                {expiryInfo && (
+                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                        expiryInfo.color === 'red' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                        {expiryInfo.text}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-1">
                                             <button onClick={() => setViewingQuote(quote)} title="Voir" className="text-blue-600 hover:text-blue-900 p-1"><EyeIcon className="h-5 w-5"/></button>

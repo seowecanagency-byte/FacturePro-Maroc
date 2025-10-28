@@ -1,7 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import { Client, UserRole } from '../types';
-import { PlusIcon, PencilIcon, TrashIcon, ArrowUpTrayIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, PencilIcon, TrashIcon, ArrowUpTrayIcon, EyeIcon } from '@heroicons/react/24/solid';
+import { Link } from 'react-router-dom';
 
 const ClientForm: React.FC<{ client?: Client; onSave: (client: Client) => void; onCancel: () => void; }> = ({ client, onSave, onCancel }) => {
     const [formData, setFormData] = useState<Client>(client || { id: '', name: '', email: '', phone: '', address: '', ice: '' });
@@ -215,15 +217,20 @@ const Clients: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredClients.map((client) => (
                                 <tr key={client.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{client.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <Link to={`/clients/${client.id}`} className="hover:text-cyan-600">{client.name}</Link>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.email}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.phone}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{client.ice}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                        <Link to={`/clients/${client.id}`} className="text-blue-600 hover:text-blue-900 p-1" title="Voir les détails">
+                                            <EyeIcon className="h-5 w-5"/>
+                                        </Link>
                                         {!isReadOnly && (
                                             <>
-                                                <button onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="text-cyan-600 hover:text-cyan-900 p-1"><PencilIcon className="h-5 w-5"/></button>
-                                                <button onClick={() => handleDelete(client.id)} className="text-red-600 hover:text-red-900 p-1"><TrashIcon className="h-5 w-5"/></button>
+                                                <button onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="text-cyan-600 hover:text-cyan-900 p-1" title="Modifier"><PencilIcon className="h-5 w-5"/></button>
+                                                <button onClick={() => handleDelete(client.id)} className="text-red-600 hover:text-red-900 p-1" title="Supprimer"><TrashIcon className="h-5 w-5"/></button>
                                             </>
                                         )}
                                     </td>
